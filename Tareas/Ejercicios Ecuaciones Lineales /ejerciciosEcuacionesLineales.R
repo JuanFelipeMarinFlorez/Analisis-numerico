@@ -20,6 +20,9 @@ library(Matrix)
 A = matrix(c(4,2,5,2,5,1,2,4,3), nrow=3, byrow=TRUE)
 b = c(18,27.3,16.2)
 
+det(A)#verificar que el sistema tenga solución
+solve(A,b)
+
 #No es Diagonal Dominante
 # |4|> |2|+|5|
 #No se cumple la igualdad 
@@ -39,10 +42,25 @@ U = triu(A,k=1,diag = FALSE)
 U
 D+L+U#verificación retorna A
 TJ = (-solve(D))%*%(L+U)
+#TJ es la matriz de trancisión 
 TJ
 
+propios <- function(matriz) {
+  a <- eigen(matriz)#utilizar la funcion eigen
+  names(a$values) <- 1:length(a$values)#genera valores
+  names(a) <- c("valores","vectores")
+  colnames(a$vectores) <- 1:nrow(a$vectores)
+  a
+}
+y=TJ
+propios(matriz=y) # O simplemente:
+propios(y) 
 
-det(A)#verificar que el sistema tenga solución
-solve(A,b)
+#-----------------------------------------------------------------
+
+print("Norma")
+print(norm(TJ,"I"))
+
+
 
 
