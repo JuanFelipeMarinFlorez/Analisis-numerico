@@ -114,8 +114,9 @@ ui <- fluidPage(
                         tabPanel("Error  Euler (S.I.R.)", plotOutput("errorEuler")),
                         tabPanel("Campo de Pendientes", plotOutput("PendientesOde")),
                         tabPanel("Metodo de Euler (S.I.)", plotOutput("siEuler")),
-                        tabPanel("Metodo de Runge-Kutta de 4to orden (S.I.)",  plotOutput("siRk4"))
-             
+                        tabPanel("Metodo de Runge-Kutta de 4to orden (S.I.)",  plotOutput("siRk4")),
+                        tabPanel("Metodo de Euler (S.I.S)", plotOutput("sisEuler")),
+                        tabPanel("Metodo de Runge-Kutta de 4to orden (S.I.S)",  plotOutput("sisRk4"))
                         
             )
             
@@ -476,6 +477,117 @@ server <- function(input, output) {
         legend(40, 0.7, c("Susceptibles", "Infectados"), pch = 1, col = 2:4, bty = "n")
     })
     
+    output$sisRk4 <- renderPlot({
+      ## Create an SIR function
+      si <- function(time, state, parameters) {
+        
+        with(as.list(c(state, parameters)), {
+          
+          dS <- -beta * S * I + (gamma * I)
+          dI <-  beta * S * I - (gamma * I)
+          
+          return(list(c(dS, dI, 0)))
+        })
+      }
+      
+      ### Set parameters
+      
+      if(input$select== "Liberia"){
+        init       <- c(S = 1-(as.numeric(unlist(Liberia[1,2])) /pobLiberia)-((as.numeric(unlist(Liberia[1,4])))/pobLiberia), I = as.numeric(unlist(Liberia[1,2]))/pobLiberia, R = ((as.numeric(unlist(Liberia[1,4])))/pobLiberia) )  
+        parameters <- c(beta = 0.4247, gamma = 0.0914)
+      }
+      else if (input$select== "SierraLeona")
+      {
+        init       <- c(S = 1-(as.numeric(unlist(SierraLeona[1,2]))/pobSierraLn)-((as.numeric(unlist(SierraLeona[1,4])))/pobSierraLn), I = as.numeric(unlist(SierraLeona[1,2])) /pobSierraLn, R = ((as.numeric(unlist(SierraLeona[1,4])))/pobSierraLn) )   
+        parameters <- c(beta = 0.5705, gamma = 0.0638)
+      }
+      else if(input$select== "Guinea"){
+        init       <- c(S = 1-(as.numeric(unlist(Guinea[1,2])) /pobGuinea)-((as.numeric(unlist(Guinea[1,4])))/pobGuinea), I = as.numeric(unlist(Guinea[1,2]))/pobGuinea, R = ((as.numeric(unlist(Guinea[1,4])))/pobGuinea) )  
+        parameters <- c(beta = 0.7407, gamma = 0.1055)
+      }
+      else if(input$select == "Personalizado"){
+        init       <- c(S = 1-(input$pobInfInicial/input$pobTotal)-((as.numeric(unlist(Liberia[1,4])))/input$pobTotal), I = input$pobInfInicial/input$pobTotal, R = ((as.numeric(unlist(Liberia[1,4])))/input$pobTotal) )
+        parameters <- c(beta = input$beta, gamma = input$gamma)
+      }
+      ## beta: infection parameter; gamma: recovery parameter
+      
+      ## Time frame
+      times      <- seq(0, 60, by = 1)
+      ## Load deSolve package
+      library(deSolve)
+      
+      ## Solve using ode (General Solver for Ordinary Differential Equations)
+      out <- ode(y = init, times = times, func = si, parms = parameters, method="rk4")
+      ## change to data frame
+      out <- as.data.frame(out)
+      ## Delete time variable
+      out$time <- NULL
+      ## Show data
+      head(out, 30)
+      ## Plot
+      matplot(x = times, y = out, type = "l",
+              xlab = "Tiempo (Dias)", ylab="Poblacion", main = "SIS con Runge-Kutta",
+              lwd = 1, lty = 1, bty = "l", col = 2:4)
+      
+      ## Add legend
+      legend(40, 0.7, c("Susceptibles", "Infectados"), pch = 1, col = 2:4, bty = "n")
+    })
+    
+    output$sisEuler <- renderPlot({
+      ## Create an SIR function
+      si <- function(time, state, parameters) {
+        
+        with(as.list(c(state, parameters)), {
+          
+          dS <- -beta * S * I + (gamma * I)
+          dI <-  beta * S * I - (gamma * I)
+          
+          return(list(c(dS, dI, 0)))
+        })
+      }
+      
+      ### Set parameters
+      
+      if(input$select== "Liberia"){
+        init       <- c(S = 1-(as.numeric(unlist(Liberia[1,2])) /pobLiberia)-((as.numeric(unlist(Liberia[1,4])))/pobLiberia), I = as.numeric(unlist(Liberia[1,2]))/pobLiberia, R = ((as.numeric(unlist(Liberia[1,4])))/pobLiberia) )  
+        parameters <- c(beta = 0.4247, gamma = 0.0914)
+      }
+      else if (input$select== "SierraLeona")
+      {
+        init       <- c(S = 1-(as.numeric(unlist(SierraLeona[1,2]))/pobSierraLn)-((as.numeric(unlist(SierraLeona[1,4])))/pobSierraLn), I = as.numeric(unlist(SierraLeona[1,2])) /pobSierraLn, R = ((as.numeric(unlist(SierraLeona[1,4])))/pobSierraLn) )   
+        parameters <- c(beta = 0.5705, gamma = 0.0638)
+      }
+      else if(input$select== "Guinea"){
+        init       <- c(S = 1-(as.numeric(unlist(Guinea[1,2])) /pobGuinea)-((as.numeric(unlist(Guinea[1,4])))/pobGuinea), I = as.numeric(unlist(Guinea[1,2]))/pobGuinea, R = ((as.numeric(unlist(Guinea[1,4])))/pobGuinea) )  
+        parameters <- c(beta = 0.7407, gamma = 0.1055)
+      }
+      else if(input$select == "Personalizado"){
+        init       <- c(S = 1-(input$pobInfInicial/input$pobTotal)-((as.numeric(unlist(Liberia[1,4])))/input$pobTotal), I = input$pobInfInicial/input$pobTotal, R = ((as.numeric(unlist(Liberia[1,4])))/input$pobTotal) )
+        parameters <- c(beta = input$beta, gamma = input$gamma)
+      }
+      ## beta: infection parameter; gamma: recovery parameter
+      
+      ## Time frame
+      times      <- seq(0, 60, by = 1)
+      ## Load deSolve package
+      library(deSolve)
+      
+      ## Solve using ode (General Solver for Ordinary Differential Equations)
+      out <- ode(y = init, times = times, func = si, parms = parameters, method="euler")
+      ## change to data frame
+      out <- as.data.frame(out)
+      ## Delete time variable
+      out$time <- NULL
+      ## Show data
+      head(out, 30)
+      ## Plot
+      matplot(x = times, y = out, type = "l",
+              xlab = "Tiempo (Dias)", ylab="Poblacion", main = "SIS con Euler",
+              lwd = 1, lty = 1, bty = "l", col = 2:4)
+      
+      ## Add legend
+      legend(40, 0.7, c("Susceptibles", "Infectados"), pch = 1, col = 2:4, bty = "n")
+    })
 }
 
 # Run the application 
